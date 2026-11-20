@@ -21,6 +21,7 @@ Copy-Item .env.example .env
 |---|---|---|
 | Blue (mặc định) | OpenRouter | `liquid/lfm-3-1.7b:free` |
 | Blue (thay thế) | DeepSeek | `DEEPSEEK_MODEL`, mặc định `deepseek-flash` |
+| Blue (thay thế) | Gemini | `GEMINI_MODEL`, mặc định `gemini-3.5-flash` |
 | Red / Red Advance | OpenAI hoặc Gemini | `gpt-4o-mini` hoặc `gemini-3.5-flash` |
 | Red / Red Advance (thay thế) | DeepSeek | `DEEPSEEK_MODEL`, mặc định `deepseek-flash` |
 
@@ -51,6 +52,14 @@ Chạy Blue bằng DeepSeek:
 ```powershell
 python src/main.py --part 3 --blue-provider deepseek
 ```
+
+Chạy Blue bằng Gemini, sử dụng `GOOGLE_API_KEY` (hoặc `GEMINI_API_KEY`) và `GEMINI_MODEL` trong `.env`:
+
+```powershell
+python src/main.py --part 3 --blue-provider gemini
+```
+
+Gemini Blue sử dụng [endpoint tương thích OpenAI của Google](https://ai.google.dev/gemini-api/docs/openai) để giữ nguyên các plugin phòng thủ. Model Blue được rubric chỉ định vẫn là OpenRouter Liquid.
 
 Checkpoint 2 và bộ test không cần key thật. Checkpoint 3 cần key của provider Blue được chọn; Checkpoint 4 cần key của provider Red được chọn. Kết quả được sinh bằng các lệnh chạy:
 

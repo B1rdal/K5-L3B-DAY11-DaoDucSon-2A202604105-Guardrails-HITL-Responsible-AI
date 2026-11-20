@@ -1,6 +1,6 @@
 """Lab 11 — Provider selection and API keys.
 
-Blue defaults to OpenRouter liquid/lfm-3-1.7b:free and supports explicit DeepSeek selection.
+Blue defaults to OpenRouter liquid/lfm-3-1.7b:free with explicit DeepSeek or Gemini alternatives.
 Red and Red Advance share the configured OpenAI, Gemini or DeepSeek provider.
 """
 from __future__ import annotations
@@ -23,6 +23,7 @@ PROVIDER_GEMINI = "gemini"
 PROVIDER_OPENROUTER = "openrouter"
 PROVIDER_DEEPSEEK = "deepseek"
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
+GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 DEFAULT_DEEPSEEK_MODEL = "deepseek-flash"
 
 # --- Blue Team defaults ---
@@ -91,20 +92,31 @@ except FileNotFoundError:
 # ---------------------------------------------------------------------------
 
 def get_blue_provider(provider: str = BLUE_PROVIDER) -> str:
-    if provider not in {PROVIDER_OPENROUTER, PROVIDER_DEEPSEEK}:
-        raise ValueError("Blue provider must be openrouter or deepseek.")
+    if provider not in {PROVIDER_OPENROUTER, PROVIDER_DEEPSEEK, PROVIDER_GEMINI}:
+        raise ValueError("Blue provider must be openrouter, deepseek or gemini.")
     return provider
 
 
 def get_blue_model(provider: str = BLUE_PROVIDER) -> str:
-    """Use the rubric model by default, or the explicitly selected DeepSeek model."""
+    """Use the rubric model by default, or the explicitly selected provider's model."""
     if get_blue_provider(provider) == PROVIDER_DEEPSEEK:
         return get_deepseek_model()
+    if provider == PROVIDER_GEMINI:
+        return get_gemini_model()
     return BLUE_MODEL
 
 
 def get_deepseek_model() -> str:
     return os.environ.get("DEEPSEEK_MODEL", DEFAULT_DEEPSEEK_MODEL).strip() or DEFAULT_DEEPSEEK_MODEL
+
+
+def get_gemini_model() -> str:
+    return os.environ.get("GEMINI_MODEL", DEFAULT_GEMINI_MODEL).strip() or DEFAULT_GEMINI_MODEL
+
+
+def get_google_api_key() -> str:
+    return (os.environ.get("GOOGLE_API_KEY", "").strip()
+            or os.environ.get("GEMINI_API_KEY", "").strip())
 
 
 def get_openrouter_api_key() -> str:
@@ -116,6 +128,9 @@ def blue_client_kwargs(provider: str = BLUE_PROVIDER) -> dict:
     if get_blue_provider(provider) == PROVIDER_DEEPSEEK:
         return {"api_key": os.environ.get("DEEPSEEK_API_KEY", "").strip() or None,
                 "base_url": DEEPSEEK_BASE_URL}
+    if provider == PROVIDER_GEMINI:
+        return {"api_key": get_google_api_key() or None,
+                "base_url": GEMINI_OPENAI_BASE_URL}
     return {
         "api_key": get_openrouter_api_key() or None,
         "base_url": (
@@ -151,10 +166,7 @@ def get_red_model() -> str:
     if get_red_provider() == PROVIDER_DEEPSEEK:
         return get_deepseek_model()
     if get_red_provider() == PROVIDER_GEMINI:
-        return (
-            os.environ.get("GEMINI_MODEL", DEFAULT_GEMINI_MODEL).strip()
-            or DEFAULT_GEMINI_MODEL
-        )
+        return get_gemini_model()
     return (
         os.environ.get("OPENAI_MODEL", DEFAULT_OPENAI_MODEL).strip()
         or DEFAULT_OPENAI_MODEL
@@ -247,9 +259,10 @@ def setup_api_key(parts=None, *, blue_provider: str = BLUE_PROVIDER):
     """Validate keys for the selected checkpoint providers."""
     parts = parts or [2, 3, 4]
     if 3 in parts:
-        key_name = "DEEPSEEK_API_KEY" if get_blue_provider(blue_provider) == PROVIDER_DEEPSEEK else "OPENROUTER_API_KEY"
+        key_name = {PROVIDER_OPENROUTER: "OPENROUTER_API_KEY", PROVIDER_DEEPSEEK: "DEEPSEEK_API_KEY",
+                    PROVIDER_GEMINI: "GOOGLE_API_KEY"}[get_blue_provider(blue_provider)]
         key = blue_client_kwargs(blue_provider)["api_key"]
-        if not key or key.endswith("..."):
+        if not key or key.endswith("...") or key.startswith("your-"):
             raise RuntimeError(f"Set {key_name} in the local .env file to run Checkpoint 3.")
         print(f"Blue  — {blue_provider_label(blue_provider)}")
     if 4 not in parts:

@@ -171,8 +171,8 @@ if __name__ == "__main__":
         choices=[2, 3, 4],
         help="2=CP2 guardrails · 3=CP3 suite · 4=CP4 red-team",
     )
-    parser.add_argument("--blue-provider", choices=["openrouter", "deepseek"], default="openrouter",
-                        help="Blue provider (default: openrouter; alternative: deepseek)")
+    parser.add_argument("--blue-provider", choices=["openrouter", "deepseek", "gemini"], default="openrouter",
+                        help="Blue provider (default: openrouter; alternatives: deepseek, gemini)")
     args = parser.parse_args()
 
     if args.part:

@@ -1,6 +1,6 @@
 """Lab 11 — Blue and Red agent factories.
 
-Blue uses defensive plugins and defaults to OpenRouter; DeepSeek is an explicit alternative.
+Blue uses defensive plugins and defaults to OpenRouter; DeepSeek and Gemini are explicit alternatives.
 Red has weak defenses. Red Advance combines regex filters and NVIDIA NeMo Guardrails.
 Protected data is synthetic lab data loaded through core.config.
 """

@@ -155,7 +155,7 @@ def test_runtime_blocks_before_model_redacts_after_and_isolates_users():
     assert len(calls) == 2
 
 
-@pytest.mark.parametrize("blue_provider", ["openrouter", "deepseek"])
+@pytest.mark.parametrize("blue_provider", ["openrouter", "deepseek", "gemini"])
 def test_suite_exports_observed_results_to_isolated_directory(monkeypatch, tmp_path, blue_provider):
     from assignment.pipeline import run_assignment_suite
 

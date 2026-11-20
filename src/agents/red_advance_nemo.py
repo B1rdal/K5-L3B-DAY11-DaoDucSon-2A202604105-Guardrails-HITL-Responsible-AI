@@ -39,6 +39,7 @@ from core.config import (
     PROVIDER_GEMINI,
     PROVIDER_DEEPSEEK,
     DEEPSEEK_BASE_URL,
+    GEMINI_OPENAI_BASE_URL,
     get_red_model,
     get_red_provider,
 )
@@ -47,7 +48,6 @@ from core.config import (
 os.environ.setdefault("NEMO_GUARDRAILS_NO_USAGE_STATS", "1")
 
 NEMO_MIN_VERSION = "0.24.1"
-GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
 INPUT_RAIL_PROTECTED = "vinbank protected value check"
 INPUT_RAIL_SELF_CHECK = "self check input"

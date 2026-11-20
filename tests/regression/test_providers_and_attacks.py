@@ -8,6 +8,35 @@ from core.utils import chat_with_agent
 import pytest
 
 
+@pytest.mark.parametrize("key_name", ["GOOGLE_API_KEY", "GEMINI_API_KEY"])
+def test_blue_gemini_uses_google_endpoint_and_preserves_guardrails(monkeypatch, key_name):
+    from agents.agent import create_blue_agent
+    from assignment.pipeline import build_production_plugins
+    from core.config import GEMINI_OPENAI_BASE_URL, setup_api_key
+
+    for name in ("GOOGLE_API_KEY", "GEMINI_API_KEY", "OPENROUTER_API_KEY"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv(key_name, "test-google-key")
+    monkeypatch.setenv("GEMINI_MODEL", "gemini-test")
+    setup_api_key([3], blue_provider="gemini")
+    plugins = build_production_plugins()
+    _, runner = create_blue_agent(plugins, provider="gemini")
+    assert runner.provider == "gemini" and runner.model == "gemini-test"
+    assert runner.client_kwargs == {"api_key": "test-google-key", "base_url": GEMINI_OPENAI_BASE_URL}
+    assert runner.plugins == plugins
+    with pytest.raises(RuntimeError, match="OPENROUTER_API_KEY"):
+        setup_api_key([3])
+
+
+def test_gemini_blue_requires_its_own_key(monkeypatch):
+    from core.config import setup_api_key
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-deepseek-key")
+    with pytest.raises(RuntimeError, match="GOOGLE_API_KEY"):
+        setup_api_key([3], blue_provider="gemini")
+
+
 def test_blue_deepseek_selection_is_explicit_and_does_not_change_default(monkeypatch):
     from agents.agent import create_blue_agent
     from core.config import setup_api_key
