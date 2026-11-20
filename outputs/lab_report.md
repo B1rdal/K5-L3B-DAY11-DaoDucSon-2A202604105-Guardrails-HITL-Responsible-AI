@@ -2,7 +2,7 @@
 
 > File này **tự sinh** bởi `scripts/grade.py`. **Không** viết / sửa tay.
 
-- Generated (UTC): `2026-11-20T11:15:27.368680+00:00`
+- Generated (UTC): `2026-11-20T11:51:38.604215+00:00`
 - Framework: `openai-sdk`
 - Technical failure: **False**
 
@@ -22,7 +22,7 @@
 
 ## Defense snapshot (từ `results.json`)
 
-- Provider / model: `deepseek` / `deepseek-flash`
+- Provider / model: `gemini` / `gemini-3.5-flash`
 - Rubric default model: `False`
 - Safe queries blocked: `0/5`
 - Attack queries blocked: `8/8`
@@ -42,7 +42,7 @@
 
 ```text
 ..........                                                               [100%]
-10 passed in 2.23s
+10 passed in 1.07s
 ```
 
 ## Notes

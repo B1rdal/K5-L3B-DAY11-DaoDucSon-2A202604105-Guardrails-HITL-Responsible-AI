@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-20T11:15:27.368680+00:00",
+  "generated_at": "2026-11-20T11:51:38.604215+00:00",
   "submission_dir": "F:\\Github\\K5-L3B-DAY11-DaoDucSon-2A202604105-Guardrails-HITL-Responsible-AI",
   "technical_failure": false,
   "packaging": {
@@ -27,8 +27,8 @@
   "artifact_summary": {
     "framework": "openai-sdk",
     "defense": {
-      "llm_provider": "deepseek",
-      "llm_model": "deepseek-flash",
+      "llm_provider": "gemini",
+      "llm_model": "gemini-3.5-flash",
       "rubric_default_model": false,
       "safe_blocked": 0,
       "safe_total": 5,
@@ -50,7 +50,7 @@
   },
   "public_tests": {
     "returncode": 0,
-    "stdout": "..........                                                               [100%]\n10 passed in 2.23s\n",
+    "stdout": "..........                                                               [100%]\n10 passed in 1.07s\n",
     "stderr": "",
     "technical_failure": false
   },
