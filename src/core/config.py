@@ -33,6 +33,9 @@ except ImportError:
 PROVIDER_OPENAI = "openai"
 PROVIDER_GEMINI = "gemini"
 PROVIDER_OPENROUTER = "openrouter"
+PROVIDER_DEEPSEEK = "deepseek"
+DEEPSEEK_BASE_URL = "https://api.deepseek.com"
+DEFAULT_DEEPSEEK_MODEL = "deepseek-flash"
 
 # --- Blue Team (LOCKED) ---
 BLUE_PROVIDER = PROVIDER_OPENROUTER
@@ -139,11 +142,15 @@ def get_red_provider() -> str:
     ).strip().lower()
     if raw in {"gemini", "google", "adk"}:
         return PROVIDER_GEMINI
-    return PROVIDER_OPENAI
+    if raw in {PROVIDER_OPENAI, PROVIDER_DEEPSEEK}:
+        return raw
+    raise ValueError("RED_TEAM_PROVIDER must be openai, gemini or deepseek.")
 
 
 def get_red_model() -> str:
     """Model Red Team từ .env (cùng cho default + advance)."""
+    if get_red_provider() == PROVIDER_DEEPSEEK:
+        return os.environ.get("DEEPSEEK_MODEL", DEFAULT_DEEPSEEK_MODEL).strip() or DEFAULT_DEEPSEEK_MODEL
     if get_red_provider() == PROVIDER_GEMINI:
         return (
             os.environ.get("GEMINI_MODEL", DEFAULT_GEMINI_MODEL).strip()
@@ -170,6 +177,9 @@ def get_openai_api_key() -> str:
 
 
 def red_openai_client_kwargs() -> dict:
+    if get_red_provider() == PROVIDER_DEEPSEEK:
+        return {"api_key": os.environ.get("DEEPSEEK_API_KEY", "").strip() or None,
+                "base_url": DEEPSEEK_BASE_URL}
     return {"api_key": get_openai_api_key() or None}
 
 
@@ -180,7 +190,7 @@ def red_provider_label(tier: str = "advance") -> str:
 
 
 def red_uses_openai_sdk() -> bool:
-    return get_red_provider() == PROVIDER_OPENAI
+    return get_red_provider() in {PROVIDER_OPENAI, PROVIDER_DEEPSEEK}
 
 
 def red_uses_gemini() -> bool:
@@ -234,25 +244,27 @@ def is_harder_model() -> bool:
     return any(x in m for x in ("gpt-5.6", "pro", "gemini-3.8", "gemini-3.7"))
 
 
-def setup_api_key():
+def setup_api_key(parts=None):
     """Ensure keys for Blue (OpenRouter) + Red / Red Advance (OpenAI or Gemini)."""
-    if not get_openrouter_api_key():
-        os.environ["OPENROUTER_API_KEY"] = input(
-            "Enter OpenRouter API Key (Blue): "
-        ).strip()
-    print(f"Blue  — {blue_provider_label()}  [LOCKED]")
+    parts = parts or [2, 3, 4]
+    if 3 in parts:
+        key = get_openrouter_api_key()
+        if not key or key.endswith("..."):
+            raise RuntimeError("Set OPENROUTER_API_KEY in the local .env file to run Checkpoint 3.")
+        print(f"Blue  — {blue_provider_label()}  [LOCKED]")
+    if 4 not in parts:
+        return
 
     red = get_red_provider()
     model = get_red_model()
+    key_name = {PROVIDER_GEMINI: "GOOGLE_API_KEY", PROVIDER_OPENAI: "OPENAI_API_KEY",
+                PROVIDER_DEEPSEEK: "DEEPSEEK_API_KEY"}[red]
+    key = os.environ.get(key_name, "").strip()
+    if not key or key.endswith("...") or key.startswith("your-"):
+        raise RuntimeError(f"Set {key_name} in the local .env file to run Checkpoint 4.")
     if red == PROVIDER_GEMINI:
-        if not os.environ.get("GOOGLE_API_KEY", "").strip():
-            os.environ["GOOGLE_API_KEY"] = input("Enter Google API Key (Red): ").strip()
         os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "0"
-        print(f"Red / Red Advance  — gemini:{model}")
-    else:
-        if not get_openai_api_key():
-            os.environ["OPENAI_API_KEY"] = input("Enter OpenAI API Key (Red): ").strip()
-        print(f"Red / Red Advance  — openai:{model}")
+    print(f"Red / Red Advance  — {red}:{model}")
 
     print(
         "Bonus: chọn một — Red tối đa +5 (B1) hoặc Red Advance tối đa +10 (B2)."

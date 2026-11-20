@@ -37,6 +37,8 @@ from agents.security_boundary import contains_secret, normalize_for_security
 from core.config import (
     DEMO_SECRETS,
     PROVIDER_GEMINI,
+    PROVIDER_DEEPSEEK,
+    DEEPSEEK_BASE_URL,
     get_red_model,
     get_red_provider,
 )
@@ -229,6 +231,10 @@ def require_nemo():
 
 
 def _model_entry(provider: str, model: str) -> dict:
+    if provider == PROVIDER_DEEPSEEK:
+        return {"type": "main", "engine": "openai", "model": model,
+                "api_key_env_var": "DEEPSEEK_API_KEY",
+                "parameters": {"base_url": DEEPSEEK_BASE_URL}}
     if provider == PROVIDER_GEMINI:
         return {
             "type": "main",
