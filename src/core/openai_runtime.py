@@ -1,10 +1,6 @@
-"""
-OpenAI SDK runtime — dùng cho:
+"""OpenAI-compatible runtime for OpenRouter Blue and OpenAI/DeepSeek agents.
 
-  Blue Team → OpenRouter liquid/lfm-3-1.7b:free (create_blue_pair)
-  Red Team  → OpenAI gpt-4o-mini (create_openai_pair) khi RED_TEAM_PROVIDER=openai
-
-Gemini Red Team dùng Google ADK trong agents/*.py — không đi qua file này.
+Google ADK handles Gemini Red agents.
 """
 from __future__ import annotations
 
@@ -19,6 +15,7 @@ from core.config import (
     get_blue_provider,
     blue_client_kwargs,
     red_openai_client_kwargs,
+    BLUE_PROVIDER,
 )
 
 
@@ -189,15 +186,16 @@ def create_blue_pair(
     input_hooks: list | None = None,
     output_hooks: list | None = None,
     temperature: float = 0.4,
+    provider: str = BLUE_PROVIDER,
 ) -> tuple[OpenAIAgent, OpenAIRunner]:
-    """Blue Team — always OpenRouter liquid/lfm-3-1.7b:free."""
+    """Blue Team with an explicit provider; defaults to the rubric's OpenRouter model."""
     return _make_pair(
         name=name,
         instruction=instruction,
         app_name=app_name,
-        model=get_blue_model(),
-        provider=get_blue_provider(),
-        client_kwargs=blue_client_kwargs(),
+        model=get_blue_model(provider),
+        provider=get_blue_provider(provider),
+        client_kwargs=blue_client_kwargs(provider),
         plugins=plugins,
         input_hooks=input_hooks,
         output_hooks=output_hooks,

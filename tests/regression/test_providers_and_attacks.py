@@ -5,6 +5,24 @@ import json
 from core.config import BLUE_MODEL, BLUE_PROVIDER, DEEPSEEK_BASE_URL
 from core.openai_runtime import create_blue_pair
 from core.utils import chat_with_agent
+import pytest
+
+
+def test_blue_deepseek_selection_is_explicit_and_does_not_change_default(monkeypatch):
+    from agents.agent import create_blue_agent
+    from core.config import setup_api_key
+
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-blue-key")
+    monkeypatch.setenv("DEEPSEEK_MODEL", "deepseek-flash")
+    setup_api_key([3], blue_provider="deepseek")
+    _, alternate = create_blue_agent([], provider="deepseek")
+    assert alternate.provider == "deepseek" and alternate.model == "deepseek-flash"
+    assert alternate.client_kwargs == {"api_key": "test-blue-key", "base_url": DEEPSEEK_BASE_URL}
+    _, default = create_blue_agent([])
+    assert default.provider == BLUE_PROVIDER and default.model == BLUE_MODEL
+    with pytest.raises(RuntimeError, match="OPENROUTER_API_KEY"):
+        setup_api_key([3])
 
 
 def test_deepseek_routes_main_model_and_nemo_to_same_provider(monkeypatch):

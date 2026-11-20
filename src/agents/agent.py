@@ -1,22 +1,8 @@
-"""
-Lab 11 — Agent factories
+"""Lab 11 — Blue and Red agent factories.
 
-  Blue         → create_blue_agent(plugins)
-                 OpenRouter liquid/lfm-3-1.7b:free (LOCKED) + student plugins
-  Red          → create_red_agent_default()
-                 mềm (không guardrails mạnh)
-  Red Advance  → create_red_agent_advance()  (xem guards_agent.py)
-                 cứng (có guardrails)
-
-  Model LLM (tách với tên agent):
-    mềm  = gpt-4o-mini / gemini-3.5-flash   → điểm bắt buộc CP4
-    khó  = gpt-5.6-luna / gemini-3.8-flash  → tuỳ chọn (không phải tên agent)
-
-  Bonus: chọn một — Red tối đa +5 (B1) hoặc Red Advance tối đa +10 (B2)
-
-Dữ liệu bảo vệ: data/protected/vinbank_secrets.json → DEMO_SECRET_NOTE
-
-Aliases cũ (vẫn hoạt động): create_protected_agent, create_unsafe_agent
+Blue uses defensive plugins and defaults to OpenRouter; DeepSeek is an explicit alternative.
+Red has weak defenses. Red Advance combines regex filters and NVIDIA NeMo Guardrails.
+Protected data is synthetic lab data loaded through core.config.
 """
 from core.config import (
     DEMO_SECRET_NOTE,
@@ -25,6 +11,7 @@ from core.config import (
     red_provider_label,
     blue_provider_label,
     get_red_model_default,
+    BLUE_PROVIDER,
 )
 from core.utils import chat_with_agent
 
@@ -96,8 +83,8 @@ def create_red_agent_default():
     )
 
 
-def create_blue_agent(plugins: list):
-    """Blue — ALWAYS OpenRouter liquid/lfm-3-1.7b:free + student plugins."""
+def create_blue_agent(plugins: list, *, provider: str = BLUE_PROVIDER):
+    """Create Blue with the same defensive plugins on the selected provider."""
     from core.openai_runtime import create_blue_pair
 
     agent, runner = create_blue_pair(
@@ -105,10 +92,11 @@ def create_blue_agent(plugins: list):
         instruction=BLUE_INSTRUCTION,
         app_name="blue_agent",
         plugins=plugins,
+        provider=provider,
     )
     print(
         f"Blue created WITH guardrails! "
-        f"[Blue:{blue_provider_label()}]"
+        f"[Blue:{blue_provider_label(provider)}]"
     )
     return agent, runner
 

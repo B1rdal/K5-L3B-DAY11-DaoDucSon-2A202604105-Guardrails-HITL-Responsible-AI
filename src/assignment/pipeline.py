@@ -86,7 +86,7 @@ async def run_assignment_suite(pipeline) -> dict:
     audit, monitor = pipeline["audit"], pipeline["monitor"]
     root = Path(__file__).resolve().parents[2]
     output = Path(pipeline.get("output_dir", root / "outputs"))
-    agent, runner = create_blue_agent(plugins)
+    agent, runner = create_blue_agent(plugins, provider=pipeline.get("blue_provider", BLUE_PROVIDER))
     rate, input_guard, output_guard = plugins
 
     def finish(request_id, user_id, text, blocked, layer):
@@ -169,7 +169,8 @@ async def run_assignment_suite(pipeline) -> dict:
         ("https://api.vinbank.example/v1/transfers", "customer@example.com"),
     ]
     results = {
-        "framework": "openai-sdk", "llm_provider": BLUE_PROVIDER, "llm_model": BLUE_MODEL,
+        "framework": "openai-sdk", "llm_provider": runner.provider, "llm_model": runner.model,
+        "rubric_default_model": runner.provider == BLUE_PROVIDER and runner.model == BLUE_MODEL,
         "safe_queries": safe, "attack_queries": attacks, "edge_cases": edges,
         "rate_limit": {"max_requests": limiter.max_requests,
                        "window_seconds": limiter.window_seconds,

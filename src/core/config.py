@@ -1,19 +1,7 @@
-"""
-Lab 11 — Configuration, provider selection, API keys.
+"""Lab 11 — Provider selection and API keys.
 
-Hai tầng model (không trộn):
-
-  Blue Team (CP2–CP3, guardrails / pipeline / protected agent)
-    → CỐ ĐỊNH OpenRouter ``liquid/lfm-3-1.7b:free``
-       https://openrouter.ai/liquid/lfm-3-1.7b:free
-    → Cần ``OPENROUTER_API_KEY``
-
-  Red Team (CP4)
-    → Chọn một provider: OpenAI hoặc Gemini
-    → Model mềm (điểm bắt buộc CP4): ``gpt-4o-mini`` / ``gemini-3.5-flash``
-    → Model khó (tuỳ chọn): ``gpt-5.6-luna`` / ``gemini-3.8-flash``
-    → Bonus: chọn một — leak **Red** tối đa +5 **hoặc** leak **Red Advance** tối đa +10
-    → ``RED_TEAM_PROVIDER=openai|gemini`` (alias: ``LLM_PROVIDER``)
+Blue defaults to OpenRouter liquid/lfm-3-1.7b:free and supports explicit DeepSeek selection.
+Red and Red Advance share the configured OpenAI, Gemini or DeepSeek provider.
 """
 from __future__ import annotations
 
@@ -37,7 +25,7 @@ PROVIDER_DEEPSEEK = "deepseek"
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DEFAULT_DEEPSEEK_MODEL = "deepseek-flash"
 
-# --- Blue Team (LOCKED) ---
+# --- Blue Team defaults ---
 BLUE_PROVIDER = PROVIDER_OPENROUTER
 BLUE_MODEL = "liquid/lfm-3-1.7b:free"
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
@@ -99,24 +87,35 @@ except FileNotFoundError:
 
 
 # ---------------------------------------------------------------------------
-# Blue Team — fixed OpenRouter Liquid
+# Blue Team provider configuration
 # ---------------------------------------------------------------------------
 
-def get_blue_provider() -> str:
-    return BLUE_PROVIDER
+def get_blue_provider(provider: str = BLUE_PROVIDER) -> str:
+    if provider not in {PROVIDER_OPENROUTER, PROVIDER_DEEPSEEK}:
+        raise ValueError("Blue provider must be openrouter or deepseek.")
+    return provider
 
 
-def get_blue_model() -> str:
-    # Hard-locked; env cannot override for the graded Blue Team path.
+def get_blue_model(provider: str = BLUE_PROVIDER) -> str:
+    """Use the rubric model by default, or the explicitly selected DeepSeek model."""
+    if get_blue_provider(provider) == PROVIDER_DEEPSEEK:
+        return get_deepseek_model()
     return BLUE_MODEL
+
+
+def get_deepseek_model() -> str:
+    return os.environ.get("DEEPSEEK_MODEL", DEFAULT_DEEPSEEK_MODEL).strip() or DEFAULT_DEEPSEEK_MODEL
 
 
 def get_openrouter_api_key() -> str:
     return os.environ.get("OPENROUTER_API_KEY", "").strip()
 
 
-def blue_client_kwargs() -> dict:
-    """OpenAI SDK kwargs pointing at OpenRouter (Blue Team only)."""
+def blue_client_kwargs(provider: str = BLUE_PROVIDER) -> dict:
+    """Client settings for the selected Blue provider."""
+    if get_blue_provider(provider) == PROVIDER_DEEPSEEK:
+        return {"api_key": os.environ.get("DEEPSEEK_API_KEY", "").strip() or None,
+                "base_url": DEEPSEEK_BASE_URL}
     return {
         "api_key": get_openrouter_api_key() or None,
         "base_url": (
@@ -126,8 +125,8 @@ def blue_client_kwargs() -> dict:
     }
 
 
-def blue_provider_label() -> str:
-    return f"{get_blue_provider()}:{get_blue_model()}"
+def blue_provider_label(provider: str = BLUE_PROVIDER) -> str:
+    return f"{get_blue_provider(provider)}:{get_blue_model(provider)}"
 
 
 # ---------------------------------------------------------------------------
@@ -150,7 +149,7 @@ def get_red_provider() -> str:
 def get_red_model() -> str:
     """Model Red Team từ .env (cùng cho default + advance)."""
     if get_red_provider() == PROVIDER_DEEPSEEK:
-        return os.environ.get("DEEPSEEK_MODEL", DEFAULT_DEEPSEEK_MODEL).strip() or DEFAULT_DEEPSEEK_MODEL
+        return get_deepseek_model()
     if get_red_provider() == PROVIDER_GEMINI:
         return (
             os.environ.get("GEMINI_MODEL", DEFAULT_GEMINI_MODEL).strip()
@@ -244,14 +243,15 @@ def is_harder_model() -> bool:
     return any(x in m for x in ("gpt-5.6", "pro", "gemini-3.8", "gemini-3.7"))
 
 
-def setup_api_key(parts=None):
-    """Ensure keys for Blue (OpenRouter) + Red / Red Advance (OpenAI or Gemini)."""
+def setup_api_key(parts=None, *, blue_provider: str = BLUE_PROVIDER):
+    """Validate keys for the selected checkpoint providers."""
     parts = parts or [2, 3, 4]
     if 3 in parts:
-        key = get_openrouter_api_key()
+        key_name = "DEEPSEEK_API_KEY" if get_blue_provider(blue_provider) == PROVIDER_DEEPSEEK else "OPENROUTER_API_KEY"
+        key = blue_client_kwargs(blue_provider)["api_key"]
         if not key or key.endswith("..."):
-            raise RuntimeError("Set OPENROUTER_API_KEY in the local .env file to run Checkpoint 3.")
-        print(f"Blue  — {blue_provider_label()}  [LOCKED]")
+            raise RuntimeError(f"Set {key_name} in the local .env file to run Checkpoint 3.")
+        print(f"Blue  — {blue_provider_label(blue_provider)}")
     if 4 not in parts:
         return
 

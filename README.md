@@ -19,11 +19,12 @@ Copy-Item .env.example .env
 
 | Agent | Provider | Model |
 |---|---|---|
-| Blue | OpenRouter | `liquid/lfm-3-1.7b:free` (cố định) |
+| Blue (mặc định) | OpenRouter | `liquid/lfm-3-1.7b:free` |
+| Blue (thay thế) | DeepSeek | `DEEPSEEK_MODEL`, mặc định `deepseek-flash` |
 | Red / Red Advance | OpenAI hoặc Gemini | `gpt-4o-mini` hoặc `gemini-3.5-flash` |
 | Red / Red Advance (thay thế) | DeepSeek | `DEEPSEEK_MODEL`, mặc định `deepseek-flash` |
 
-DeepSeek dùng `RED_TEAM_PROVIDER=deepseek` và `DEEPSEEK_API_KEY`. Đây là provider thay thế; rubric chỉ định OpenAI/Gemini cho lần chạy chấm điểm. Provider và model thực tế được ghi trong artifact. Blue luôn dùng OpenRouter.
+DeepSeek dùng `DEEPSEEK_API_KEY` và `DEEPSEEK_MODEL`. Chọn DeepSeek cho Red bằng `RED_TEAM_PROVIDER=deepseek`, cho Blue bằng `--blue-provider deepseek`. Mặc định Blue vẫn dùng OpenRouter. Rubric chỉ định OpenRouter cho Blue và OpenAI/Gemini cho Red; artifact ghi provider, model thực tế và trạng thái khớp cấu hình rubric.
 
 ## Thiết kế
 
@@ -45,7 +46,13 @@ python -m pytest tests/smoke tests/public tests/regression -q
 python scripts/grade.py --submission-dir . --out outputs/grade_report.json
 ```
 
-Checkpoint 2 và bộ test không cần key thật. Checkpoint 3 cần key OpenRouter; Checkpoint 4 cần key của provider Red được chọn. Kết quả được sinh bằng các lệnh chạy:
+Chạy Blue bằng DeepSeek:
+
+```powershell
+python src/main.py --part 3 --blue-provider deepseek
+```
+
+Checkpoint 2 và bộ test không cần key thật. Checkpoint 3 cần key của provider Blue được chọn; Checkpoint 4 cần key của provider Red được chọn. Kết quả được sinh bằng các lệnh chạy:
 
 | Checkpoint | Artifact |
 |---|---|

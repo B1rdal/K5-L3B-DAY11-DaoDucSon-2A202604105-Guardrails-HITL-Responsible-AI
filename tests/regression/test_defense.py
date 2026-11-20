@@ -125,8 +125,9 @@ def test_monitoring_thresholds_and_repeated_checks(tmp_path):
     assert data["block_rate"] == 0.6 and data["judge_fail_rate"] == 0.4
 
 
-def make_runner(plugins, reply="Please contact your bank for current account details."):
-    agent, runner = create_blue_pair(name="test", instruction="Banking support", app_name="test", plugins=plugins)
+def make_runner(plugins, reply="Please contact your bank for current account details.", *, provider="openrouter"):
+    agent, runner = create_blue_pair(name="test", instruction="Banking support", app_name="test",
+                                     plugins=plugins, provider=provider)
     calls = []
 
     def create(**kwargs):
@@ -154,15 +155,20 @@ def test_runtime_blocks_before_model_redacts_after_and_isolates_users():
     assert len(calls) == 2
 
 
-def test_suite_exports_observed_results_to_isolated_directory(monkeypatch, tmp_path):
+@pytest.mark.parametrize("blue_provider", ["openrouter", "deepseek"])
+def test_suite_exports_observed_results_to_isolated_directory(monkeypatch, tmp_path, blue_provider):
     from assignment.pipeline import run_assignment_suite
 
     plugins = build_production_plugins()
-    agent, runner, calls = make_runner(plugins)
-    monkeypatch.setattr("agents.agent.create_blue_agent", lambda _: (agent, runner))
+    agent, runner, calls = make_runner(plugins, provider=blue_provider)
+    monkeypatch.setattr("agents.agent.create_blue_agent", lambda _, **kwargs: (agent, runner))
     audit, monitor = build_observability()
     result = asyncio.run(run_assignment_suite({"plugins": plugins, "audit": audit,
-                                              "monitor": monitor, "output_dir": tmp_path}))
+                                              "monitor": monitor, "output_dir": tmp_path,
+                                              "blue_provider": blue_provider}))
+    assert result["llm_provider"] == blue_provider
+    assert result["llm_model"] == runner.model
+    assert result["rubric_default_model"] == (blue_provider == "openrouter")
     assert len(calls) == 5
     assert all(not row["blocked"] for row in result["safe_queries"])
     assert all(row["blocked"] for row in result["attack_queries"])
@@ -178,7 +184,7 @@ def test_model_failure_does_not_generate_success_artifact(monkeypatch, tmp_path)
     plugins = build_production_plugins()
     agent, runner, _ = make_runner(plugins)
     runner._client = lambda: (_ for _ in ()).throw(RuntimeError("provider unavailable"))
-    monkeypatch.setattr("agents.agent.create_blue_agent", lambda _: (agent, runner))
+    monkeypatch.setattr("agents.agent.create_blue_agent", lambda _, **kwargs: (agent, runner))
     audit, monitor = build_observability()
     with pytest.raises(RuntimeError, match="provider unavailable"):
         asyncio.run(run_assignment_suite({"plugins": plugins, "audit": audit,

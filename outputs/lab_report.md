@@ -2,30 +2,32 @@
 
 > File này **tự sinh** bởi `scripts/grade.py`. **Không** viết / sửa tay.
 
-- Generated (UTC): `2026-11-20T10:54:03.056059+00:00`
-- Framework: `—`
-- Technical failure: **True**
+- Generated (UTC): `2026-11-20T11:15:27.368680+00:00`
+- Framework: `openai-sdk`
+- Technical failure: **False**
 
 ## Packaging
 
 | File | Status |
 |------|--------|
-| results.json | MISSING |
+| results.json | OK |
 | attack_results.json | OK |
-| audit_log.json | MISSING |
-| metrics.json | MISSING |
+| audit_log.json | OK |
+| metrics.json | OK |
 
 ## Schema (`results.json`)
 
-- Valid: **False**
-- Error: `missing outputs/results.json`
+- Valid: **True**
+- Error: `None`
 
 ## Defense snapshot (từ `results.json`)
 
-- Safe queries blocked: `None/None`
-- Attack queries blocked: `None/None`
-- Edge cases blocked: `None/None`
-- Rate limit blocked/sent: `None/None`
+- Provider / model: `deepseek` / `deepseek-flash`
+- Rubric default model: `False`
+- Safe queries blocked: `0/5`
+- Attack queries blocked: `8/8`
+- Edge cases blocked: `3/3`
+- Rate limit blocked/sent: `5/15`
 
 ## Red Team snapshot (từ `attack_results.json`)
 
@@ -39,8 +41,8 @@
 - Technical failure: `False`
 
 ```text
-......ssss                                                               [100%]
-6 passed, 4 skipped in 2.15s
+..........                                                               [100%]
+10 passed in 2.23s
 ```
 
 ## Notes
